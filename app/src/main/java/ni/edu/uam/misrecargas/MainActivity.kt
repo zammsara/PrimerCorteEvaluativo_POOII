@@ -5,12 +5,24 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.shape.RoundedCornerShape
 import ni.edu.uam.misrecargas.ui.theme.MisRecargasTheme
 import androidx.compose.material3.ExperimentalMaterial3Api
+
+//MODELO
+data class Recarga(
+    val telefono: String,
+    val monto: String,
+    val compania: String
+)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -29,17 +41,29 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun PantallaPrincipal() {
 
+    //ESTADOS
     var numeroTelefono by remember { mutableStateOf("") }
     var montoRecarga by remember { mutableStateOf("") }
     var compania by remember { mutableStateOf("Seleccionar compañía") }
     var mensaje by remember { mutableStateOf("") }
     var expandido by remember { mutableStateOf(false) }
 
+    var listaRecargas by remember { mutableStateOf(listOf<Recarga>()) }
+
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = Color(0xFFE8F5E9), // fondo verde claro
         topBar = {
             TopAppBar(
-                title = { Text("Mis Recargas") }
+                title = {
+                    Text(
+                        "Mis Recargas",
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFF2E7D32),
+                    titleContentColor = Color.White
+                )
             )
         }
     ) { padding ->
@@ -48,22 +72,29 @@ fun PantallaPrincipal() {
             modifier = Modifier
                 .padding(padding)
                 .padding(16.dp)
+                .fillMaxSize()
         ) {
 
             //FORMULARIO
             Card(
-                elevation = CardDefaults.cardElevation(8.dp)
+                shape = RoundedCornerShape(24.dp),
+                elevation = CardDefaults.cardElevation(10.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.White
+                )
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
 
                     Text(
                         "Registrar Recarga",
-                        style = MaterialTheme.typography.titleLarge
+                        style = MaterialTheme.typography.titleLarge,
+                        color = Color(0xFF2E7D32),
+                        fontWeight = FontWeight.Bold
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    //NÚMERO
+                    // TELEFONO
                     OutlinedTextField(
                         value = numeroTelefono,
                         onValueChange = { numeroTelefono = it },
@@ -83,7 +114,7 @@ fun PantallaPrincipal() {
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    //COMPAÑÍA
+                    //COMPAÑIA
                     val companias = listOf("Claro", "Tigo", "Movistar")
 
                     ExposedDropdownMenuBox(
@@ -121,50 +152,89 @@ fun PantallaPrincipal() {
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    //BOTÓN
+                    //BOTON
                     Button(
                         onClick = {
                             if (numeroTelefono.isNotBlank() && montoRecarga.isNotBlank()) {
+
+                                val nuevaRecarga = Recarga(
+                                    telefono = numeroTelefono,
+                                    monto = montoRecarga,
+                                    compania = compania
+                                )
+
+                                listaRecargas = listaRecargas + nuevaRecarga
+
                                 mensaje = "Recarga registrada correctamente"
+
+                                // limpiar campos
+                                numeroTelefono = ""
+                                montoRecarga = ""
+                                compania = "Seleccionar compañía"
+
                             } else {
                                 mensaje = "Complete todos los campos"
                             }
                         },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF2E7D32),
+                            contentColor = Color.White
+                        )
                     ) {
                         Text("Registrar Recarga")
                     }
 
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    //MENSAJE DINÁMICO
+                    //MENSAJE
                     Text(
                         text = mensaje,
-                        color = MaterialTheme.colorScheme.primary
+                        color = Color(0xFF2E7D32),
+                        fontWeight = FontWeight.Medium
                     )
                 }
             }
 
-            //CARD DE RESULTADO (REQUISITO DE LA RÚBRICA)
-            if (mensaje.contains("correctamente")) {
+            Spacer(modifier = Modifier.height(16.dp))
 
-                Spacer(modifier = Modifier.height(16.dp))
+            //TITULO HISTORIAL
+            Text(
+                "Historial de recargas",
+                style = MaterialTheme.typography.titleLarge,
+                color = Color(0xFF2E7D32),
+                fontWeight = FontWeight.Bold
+            )
 
-                Card(
-                    elevation = CardDefaults.cardElevation(6.dp)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
+            Spacer(modifier = Modifier.height(8.dp))
 
-                        Text(
-                            "Última recarga",
-                            style = MaterialTheme.typography.titleMedium
+            //LISTA
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(listaRecargas) { recarga ->
+
+                    Card(
+                        shape = RoundedCornerShape(20.dp),
+                        elevation = CardDefaults.cardElevation(6.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color(0xFFA5D6A7)
                         )
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
 
-                        Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                "${recarga.telefono}",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
 
-                        Text("Número: $numeroTelefono")
-                        Text("Monto: $montoRecarga")
-                        Text("Compañía: $compania")
+                            Spacer(modifier = Modifier.height(4.dp))
+
+                            Text("Monto: ${recarga.monto}")
+                            Text("${recarga.compania}")
+                        }
                     }
                 }
             }
